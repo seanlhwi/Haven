@@ -72,25 +72,43 @@ func _apply_gravity(delta):
 		velocity.y += base_gravity * mult * delta # takes base, multiply it by chosen scale, and adds it to downward velocity
 		velocity.y = min(velocity.y, MAX_FALL_SPEED) # picks smaller number, caps speed to max_fall_speed
 
-# --- Wall Jump/ Slide ---
-const GRAV_NORM: float      = 14.5
-const GRAV_WALL: float      = 8.5
+# --- Wall Jump/ Cling ---
 const WALL_JUMP_PUSH: float = 100.0
+const WALL_CLIMB_SPEED = 70.0   # max speed sliding up/down the wall
+const WALL_CLIMB_ACCEL = 2000.0  # how fast you speed up on the wall
+const WALL_CLIMB_FRIC  = 2300.0  # how fast you stop when no up/down is held
 
 var wall_contact_coyote: float = 0.0
 const WALL_CONT_COYOTE_TIME: float = 0.2
 
 var wall_jump_lock: float = 0.0
 const WALL_JUMP_LOCK_TIME = 0.05
-var look_dir_x: int = 1
 
+var look_dir_x: int = 1
+var is_clinging := false
+
+func _update_cling() -> void:
+	var toward := Input.get_axis("move_left", "move_right")
+	var wall_dir := -signf(get_wall_normal().x) if is_on_wall() else 0.0
+	is_clinging = (
+		not is_on_floor()
+		and is_on_wall()
+		and wall_jump_lock <= 0.0
+		and toward != 0.0
+		and toward == wall_dir
+	)
+		
 func _wall_jump(delta: float) -> void:
-	var on_wall_slide := not is_on_floor() and is_on_wall() and velocity.y > 0.0
-	
-	if on_wall_slide:
+	if is_clinging:
 		look_dir_x = int(sign(get_wall_normal().x)) * -1  # direction of the wall
 		wall_contact_coyote = WALL_CONT_COYOTE_TIME
-		velocity.y = min(velocity.y, GRAV_WALL * 10.0)  # slow the slide
+		
+		var v_input := Input.get_axis("move_up", "move_down")  # up is negative
+		if v_input != 0.0:
+			velocity.y = move_toward(velocity.y, v_input * WALL_CLIMB_SPEED, WALL_CLIMB_ACCEL * delta)
+		else:
+			velocity.y = move_toward(velocity.y, 0.0, WALL_CLIMB_FRIC * delta)
+			velocity.x = look_dir_x * 20.0  # small push into the wall keeps is_on_wall() true
 	else:
 		wall_contact_coyote = max(wall_contact_coyote - delta, 0.0)
 	
@@ -107,5 +125,6 @@ func _physics_process(delta):
 	_apply_gravity(delta)
 	_handle_jump(delta)
 	_handle_horizontal(delta)
+	_update_cling()
 	_wall_jump(delta)
 	move_and_slide()
