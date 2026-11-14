@@ -12,6 +12,9 @@ const JUMP_VELOCITY = -300 # initial jump speed (godot y asix is negative, so y 
 
 # --- adds acceleration and smooth stop ---
 func _handle_horizontal(delta):
+	if wall_jump_lock > 0.0:
+		return
+		
 	var direction := Input.get_axis("move_left", "move_right") # -1 if left, 0 if still, +1 if right
 	if direction != 0.0: # if direction key if pressed
 		var accel := ACCEL if is_on_floor() else AIR_ACCEL # picks ground or air ACCEL constant
@@ -69,8 +72,40 @@ func _apply_gravity(delta):
 		velocity.y += base_gravity * mult * delta # takes base, multiply it by chosen scale, and adds it to downward velocity
 		velocity.y = min(velocity.y, MAX_FALL_SPEED) # picks smaller number, caps speed to max_fall_speed
 
+# --- Wall Jump/ Slide ---
+const GRAV_NORM: float      = 14.5
+const GRAV_WALL: float      = 8.5
+const WALL_JUMP_PUSH: float = 100.0
+
+var wall_contact_coyote: float = 0.0
+const WALL_CONT_COYOTE_TIME: float = 0.2
+
+var wall_jump_lock: float = 0.0
+const WALL_JUMP_LOCK_TIME = 0.05
+var look_dir_x: int = 1
+
+func _wall_jump(delta: float) -> void:
+	var on_wall_slide := not is_on_floor() and is_on_wall() and velocity.y > 0.0
+	
+	if on_wall_slide:
+		look_dir_x = int(sign(get_wall_normal().x)) * -1  # direction of the wall
+		wall_contact_coyote = WALL_CONT_COYOTE_TIME
+		velocity.y = min(velocity.y, GRAV_WALL * 10.0)  # slow the slide
+	else:
+		wall_contact_coyote = max(wall_contact_coyote - delta, 0.0)
+	
+	if wall_jump_lock > 0.0:
+		wall_jump_lock = max(wall_jump_lock - delta, 0.0)
+	
+	if not is_on_floor() and wall_contact_coyote > 0.0 and Input.is_action_just_pressed("jump"):
+		velocity.y = JUMP_VELOCITY
+		velocity.x = -look_dir_x * WALL_JUMP_PUSH
+		wall_jump_lock = WALL_JUMP_LOCK_TIME
+		wall_contact_coyote = 0.0
+
 func _physics_process(delta):
 	_apply_gravity(delta)
 	_handle_jump(delta)
 	_handle_horizontal(delta)
+	_wall_jump(delta)
 	move_and_slide()
