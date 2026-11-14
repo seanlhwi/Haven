@@ -8,40 +8,58 @@
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_feb5d"]
 texture = ExtResource("2_e2o6t")
 4:0/0 = 0
+4:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 5:0/0 = 0
+5:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 6:0/0 = 0
+6:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 7:0/0 = 0
+7:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 4:1/0 = 0
+4:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 5:1/0 = 0
+5:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 6:1/0 = 0
+6:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 7:1/0 = 0
+7:1/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 4:2/0 = 0
+4:2/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 5:2/0 = 0
+5:2/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 6:2/0 = 0
+6:2/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 7:2/0 = 0
+7:2/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 4:3/0 = 0
+4:3/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 5:3/0 = 0
+5:3/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 6:3/0 = 0
+6:3/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 7:3/0 = 0
+7:3/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 7:4/0 = 0
 6:5/0 = 0
 
 [sub_resource type="TileSet" id="TileSet_xuden"]
+physics_layer_0/collision_layer = 1
 sources/0 = SubResource("TileSetAtlasSource_feb5d")
 
 [node name="Game" type="Node2D" unique_id=1714813775]
 
 [node name="Player" parent="." unique_id=335862165 instance=ExtResource("1_80nbo")]
-position = Vector2(-5, 1)
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=832723039]
+zoom = Vector2(3, 3)
 
 [node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=221443512]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=595950713]
-position = Vector2(-1, 58)
+position = Vector2(-5, 108)
 shape = SubResource("WorldBoundaryShape2D_xuden")
 
 [node name="TileMap" type="TileMap" parent="." unique_id=1982663378]
 tile_set = SubResource("TileSet_xuden")
 format = 2
+layer_0/tile_data = PackedInt32Array(65533, 393216, 0, 65534, 393216, 0, 65535, 393216, 0, 0, 393216, 0, 1, 393216, 0, 2, 393216, 0, 65532, 393216, 0, 65531, 393216, 0, -6, 458752, 0, -7, 393216, 0, -8, 393216, 0, -9, 393216, 0, -10, 393216, 0, -11, 327680, 0, 65525, 327680, 1, 131061, 327680, 2, 131062, 393216, 2, 131063, 393216, 2, 131064, 393216, 2, 131065, 393216, 2, 131066, 393216, 2, 131067, 393216, 2, 131068, 393216, 2, 131069, 393216, 2, 131070, 393216, 2, 131071, 393216, 2, 65536, 393216, 2, 65537, 393216, 2, 65538, 393216, 2, 65539, 393216, 2, 65540, 393216, 2, 3, 393216, 0, 4, 393216, 0, -65531, 327680, 1, -131067, 327680, 1, -196603, 327680, 1, -262139, 327680, 1, -327675, 327680, 1, -393211, 327680, 1, -458747, 327680, 0, -458746, 458752, 0, -393210, 458752, 1, -327674, 458752, 1, -262138, 458752, 1, -196602, 458752, 1, -131066, 458752, 1, -65530, 458752, 1, 65542, 458752, 2, 6, 458752, 1, 65541, 393216, 2, 5, 393216, 1, 65530, 393216, 1, 65529, 393216, 1, 65528, 393216, 1, 65527, 393216, 1, 65526, 393216, 1, -196614, 262144, 0, -131078, 262144, 2, -131070, 393216, 3, -131069, 458752, 3, -131071, 327680, 3, -4, 262144, 3, -65540, 262144, 3, -3, 262144, 3, -131077, 262144, 3)
