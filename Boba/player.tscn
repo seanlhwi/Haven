@@ -4,15 +4,15 @@
 [ext_resource type="Texture2D" uid="uid://uelvhslkv8pv" path="res://icon.svg" id="2_onrkg"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_xuden"]
-radius = 61.204575
 
 [node name="Player" type="CharacterBody2D" unique_id=335862165]
 script = ExtResource("1_onrkg")
 
 [node name="Icon" type="Sprite2D" parent="." unique_id=727068469]
-position = Vector2(-2, -12)
+position = Vector2(0, -12.000001)
+scale = Vector2(0.1796875, 0.171875)
 texture = ExtResource("2_onrkg")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=124079918]
-position = Vector2(-3, -12)
+position = Vector2(0, -12)
 shape = SubResource("CircleShape2D_xuden")
