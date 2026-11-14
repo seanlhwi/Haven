@@ -1,3 +1,16 @@
 [gd_scene format=3 uid="uid://crwqxmtc4hsks"]
 
+[ext_resource type="Texture2D" uid="uid://uelvhslkv8pv" path="res://icon.svg" id="1_80nbo"]
+
+[sub_resource type="Environment" id="Environment_xuden"]
+background_mode = 3
+glow_enabled = true
+
 [node name="Game" type="Node2D" unique_id=1714813775]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1506611995]
+environment = SubResource("Environment_xuden")
+
+[node name="Icon" type="Sprite2D" parent="." unique_id=1648834225]
+position = Vector2(744, 248)
+texture = ExtResource("1_80nbo")
