@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://di6dta4gceh1m"]
+
+[ext_resource type="Script" uid="uid://dqk5ngkdn7l20" path="res://boba_cup.gd" id="1_irrcb"]
+[ext_resource type="Texture2D" uid="uid://p2tgx24u8kk" path="res://Assests/Sprites/boba_cup.png" id="2_cgxnv"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xuden"]
+size = Vector2(125, 227.5)
+
+[node name="boba cup" type="Node2D" unique_id=1488579932]
+script = ExtResource("1_irrcb")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1052186091]
+position = Vector2(0, -2)
+scale = Vector2(1, 1.0234375)
+texture = ExtResource("2_cgxnv")
+
+[node name="Area2D" type="Area2D" parent="." unique_id=381578165]
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=1014168286]
+position = Vector2(1, 12.25)
+shape = SubResource("RectangleShape2D_xuden")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=2016750802]
+
+[node name="Label" type="Label" parent="CanvasLayer" unique_id=872734371]
+offset_left = -54.0
+offset_top = -189.0
+offset_right = 49.0
+offset_bottom = -166.0
+text = "You Finished!"
