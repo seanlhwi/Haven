@@ -1,4 +1,5 @@
 extends CharacterBody2D
+@onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 
 # --- Horizontal Movement ---
 const SPEED     = 130
@@ -6,13 +7,6 @@ const ACCEL     = 1300   # ground: how fast you speed up
 const FRIC      = 1600   # ground: how fast you slow down
 const AIR_ACCEL = 900    # weaker steering during airtime (lower than ground acceleration)
 const AIR_FRIC  = 350    # how quickly you slow down (lower number retains more velocity)
-
-# --- Jumping ---
-const JUMP_VELOCITIES = [-200.0, -280.0, -360.0] # jumps 1, 2, 3
-const COMBO_TIMER = 0.10 # time for combo jump after hittin floor
-
-var jump_stage := 0   # counts jump stage
-var combo_timer := 0.0
 
 # --- adds acceleration and smooth stop ---
 func _handle_horizontal(delta):
@@ -36,6 +30,12 @@ const JUMP_CUT = 0.45 # fraction of the rising speed kept on an early release
 var coyote_timer := 0.0
 var jump_buffer_timer := 0.0
 
+const JUMP_VELOCITIES = [-200.0, -280.0, -360.0] # jumps 1, 2, 3
+const COMBO_TIMER = 0.10 # time for combo jump after hittin floor
+
+var jump_stage := 0   # counts jump stage
+var combo_timer := 0.0
+
 func _handle_jump(delta):
 	# --- Coyote timer + combo timer ---
 	if is_on_floor():
@@ -44,7 +44,7 @@ func _handle_jump(delta):
 		if combo_timer == 0.0:
 			jump_stage = 0 # waited too long, chain resets
 	else:
-		coyote_timer = max(coyote_timer - delta, 0.0)
+		coyote_timer = max(coyote_timer - delta, 0.0) # if not on floor, count down coyote time
 	
 	# --- Jump Buffer Timer ---
 	if Input.is_action_pressed("jump"):
@@ -53,10 +53,9 @@ func _handle_jump(delta):
 		jump_buffer_timer = max(jump_buffer_timer - delta, 0.0) # start buffer timer if button pressed in past frame, otherwise make timer = 0.0
 		
 	if jump_buffer_timer > 0.0 and coyote_timer > 0.0:
-		velocity.y = JUMP_VELOCITIES[jump_stage]            # pick this jump's speed
-		#jump_stage = (jump_stage + 1) % JUMP_VELOCITIES.size() # move to the next jump, wrap after the last
-		jump_stage = min(jump_stage + 1, JUMP_VELOCITIES.size() - 1) # advance, but stay on the last (highest) jump
-		combo_timer = COMBO_TIMER                         # restart the window
+		velocity.y = JUMP_VELOCITIES[jump_stage] # picks current jump level
+		jump_stage = min(jump_stage + 1, JUMP_VELOCITIES.size() - 1) # next jumps are level 3
+		combo_timer = COMBO_TIMER # restart timer
 		jump_buffer_timer = 0.0
 		coyote_timer = 0.0
 		
@@ -115,25 +114,54 @@ func _update_cling() -> void: # returns to nothing
 func _wall_jump(delta: float) -> void:
 	if is_clinging:
 		look_dir_x = int(-signf(get_wall_normal().x))  # direction of the wall
-		wall_contact_coyote = WALL_CONT_COYOTE_TIME
+		wall_contact_coyote = WALL_CONT_COYOTE_TIME # fills coyote time until not on cling
 		
-		var v_input := Input.get_axis("move_up", "move_down")  # up is negative
-		var target_y := v_input * WALL_CLIMB_SPEED if v_input != 0.0 else WALL_SLIDE_SPEED
-		var rate := WALL_CLIMB_ACCEL if v_input != 0.0 else WALL_CLIMB_FRIC
-		velocity.y = move_toward(velocity.y, target_y, rate * delta)
+		var v_input := Input.get_axis("move_up", "move_down")  # v_input is -1, +1, or 0
+		var target_y := v_input * WALL_CLIMB_SPEED if v_input != 0.0 else WALL_SLIDE_SPEED # if direction from v_input is 1 or -1, multiply climb speed, if v_input is 0 use slow slide speed
+		var rate := WALL_CLIMB_ACCEL if v_input != 0.0 else WALL_CLIMB_FRIC # if v_input -1, +1, accel, if v_input 0, fric
+		velocity.y = move_toward(velocity.y, target_y, rate * delta) # multiplies current x target x max frame rate?
 		
 		velocity.x = look_dir_x * 20.0  # small push keeps is_on_wall true
 	else:
-		wall_contact_coyote = max(wall_contact_coyote - delta, 0.0)
+		wall_contact_coyote = max(wall_contact_coyote - delta, 0.0) # counts down jump buffer after leaving ledge
 	
 	if wall_jump_lock > 0.0:
-		wall_jump_lock = max(wall_jump_lock - delta, 0.0)
+		wall_jump_lock = max(wall_jump_lock - delta, 0.0) # blocks _handle_horizontal and _update_cling
 	
-	if not is_on_floor() and wall_contact_coyote > 0.0 and Input.is_action_just_pressed("jump"):
-		velocity.y = WALL_GLIDE_SPEED
-		velocity.x = -look_dir_x * WALL_JUMP_PUSH
-		wall_jump_lock = WALL_JUMP_LOCK_TIME
-		wall_contact_coyote = 0.0
+	if not is_on_floor() and wall_contact_coyote > 0.0 and Input.is_action_just_pressed("jump"): # if not on floor, coyote time is above 0.0, and action just pressed
+		velocity.y = WALL_GLIDE_SPEED # wall jump launch speed
+		velocity.x = -look_dir_x * WALL_JUMP_PUSH # launch away from wall
+		wall_jump_lock = WALL_JUMP_LOCK_TIME # time lock on _handle_horizontal and _update_cling
+		wall_contact_coyote = 0.0 # uses grace period to stop multiple jumps
+		
+# --- Animations ---
+const WALL_HOLD_FRAME := 3
+
+var was_clinging := false
+var wall_off_playing := false
+
+func _ready() -> void:
+	animated_sprite.animation_finished.connect(_on_animation_finished)
+
+func _on_animation_finished() -> void:
+	if animated_sprite.animation.ends_with("_wall_off"):
+		wall_off_playing = false
+
+func _handle_anim() -> void:
+	if is_clinging:
+		if look_dir_x < 0:
+			animated_sprite.play("left_wall")
+		else:
+			animated_sprite.play("right_wall")
+		return
+	
+	var direction := Input.get_axis("move_left", "move_right")
+	if direction == 0.0:
+		animated_sprite.play("idle")
+	elif direction < 0.0:
+		animated_sprite.play("idle")   # swap in "run_left" when you have one
+	else:
+		animated_sprite.play("idle")   # swap in "run_right" when you have one
 
 func _physics_process(delta):
 	_update_cling()
@@ -141,4 +169,5 @@ func _physics_process(delta):
 	_handle_jump(delta)
 	_handle_horizontal(delta)
 	_wall_jump(delta)
+	_handle_anim()
 	move_and_slide()
