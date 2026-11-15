@@ -178,9 +178,9 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_b26j0")
 }],
-"loop": 1,
+"loop": 0,
 "name": &"dash_left",
-"speed": 5.0
+"speed": 15.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -195,9 +195,9 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_urp6f")
 }],
-"loop": 1,
+"loop": 0,
 "name": &"dash_left_off",
-"speed": 5.0
+"speed": 15.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -205,7 +205,7 @@ animations = [{
 }],
 "loop": 1,
 "name": &"dash_left_on",
-"speed": 5.0
+"speed": 15.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -220,9 +220,9 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_q13i1")
 }],
-"loop": 1,
+"loop": 0,
 "name": &"dash_right",
-"speed": 5.0
+"speed": 15.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -237,9 +237,9 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_7ahtn")
 }],
-"loop": 1,
+"loop": 0,
 "name": &"dash_right_off",
-"speed": 5.0
+"speed": 15.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -247,7 +247,7 @@ animations = [{
 }],
 "loop": 1,
 "name": &"dash_right_on",
-"speed": 5.0
+"speed": 15.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -263,7 +263,7 @@ animations = [{
 "texture": SubResource("AtlasTexture_2hs0m")
 }],
 "loop": 1,
-"name": &"default",
+"name": &"idle",
 "speed": 10.0
 }, {
 "frames": [{
@@ -279,9 +279,9 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_qtqh7")
 }],
-"loop": 1,
+"loop": 0,
 "name": &"left_wall",
-"speed": 5.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -296,9 +296,9 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_634y6")
 }],
-"loop": 1,
+"loop": 0,
 "name": &"left_wall_off",
-"speed": 5.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -306,7 +306,7 @@ animations = [{
 }],
 "loop": 1,
 "name": &"left_wall_on",
-"speed": 5.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -321,9 +321,9 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_ek41f")
 }],
-"loop": 1,
+"loop": 0,
 "name": &"right_wall",
-"speed": 5.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -338,9 +338,9 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_331ug")
 }],
-"loop": 1,
+"loop": 0,
 "name": &"right_wall_off",
-"speed": 5.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -348,7 +348,7 @@ animations = [{
 }],
 "loop": 1,
 "name": &"right_wall_on",
-"speed": 5.0
+"speed": 10.0
 }]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_6mlwo"]
@@ -359,8 +359,8 @@ script = ExtResource("1_onrkg")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=883259731]
 sprite_frames = SubResource("SpriteFrames_6mlwo")
-animation = &"dash_left"
-autoplay = "default"
+animation = &"dash_right_on"
+autoplay = "idle"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1739995885]
 shape = SubResource("CircleShape2D_6mlwo")
