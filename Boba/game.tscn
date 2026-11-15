@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://ch7v2nq2phuf6" path="res://Assests/Sprites/tiles_background.png" id="2_feb5d"]
 [ext_resource type="Texture2D" uid="uid://b2t8b8a1hwav8" path="res://Assests/Sprites/spikes.png" id="3_fc0e3"]
 [ext_resource type="PackedScene" uid="uid://cg5ba4bg27bcy" path="res://Scenes/killzone.tscn" id="4_fc0e3"]
+[ext_resource type="PackedScene" uid="uid://bvs8vgc8h4sir" path="res://Scenes/node_2d.tscn" id="5_7jktm"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_7jktm"]
 texture = ExtResource("2_feb5d")
@@ -142,5 +143,8 @@ z_index = 5
 [node name="CollisionShape2D" type="CollisionShape2D" parent="killzone" unique_id=1962168030]
 position = Vector2(0, 25)
 shape = SubResource("WorldBoundaryShape2D_ty8ki")
+
+[node name="Node2D" parent="." unique_id=1023784128 instance=ExtResource("5_7jktm")]
+position = Vector2(7, -41)
 
 [connection signal="body_entered" from="killzone" to="Player" method="_on_killzone_body_entered"]
