@@ -51,7 +51,7 @@ func _handle_jump(delta):
 		coyote_timer = 0.0 # if both Coyote Time and Jump Buffer are true, jump and set values to 0.0
 		
  	# --- Variable Jump Height ---
-	if Input.is_action_just_released("jump") and velocity.y < 0.0:
+	if Input.is_action_just_released("jump") and velocity.y < 0.0 and not is_clinging:
 		velocity.y *= JUMP_CUT # after one frame after press, when rising up (positive velocty), cut upward speed to 45%
 		
 
@@ -65,6 +65,8 @@ const MAX_FALL_SPEED    = 400.0 # max speed when falling for control
 var base_gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity") # brings default gravity number to scale with const, float is decimal number
 
 func _apply_gravity(delta):
+	if is_clinging:
+		return
 	if not is_on_floor():
 		var mult := RISE_GRAV_MULT if velocity.y < 0.0 else FALL_GRAV_MULT # when not on floor, multiply rise and fall gravity based on + or - velocity
 		if absf(velocity.y) < APEX_SPEED_THRES: # "absf" is absolute value
@@ -74,12 +76,10 @@ func _apply_gravity(delta):
 
 # --- Wall Jump/ Cling ---
 const WALL_JUMP_PUSH: float = 100.0
-const WALL_CLIMB_SPEED = 130.0   # max speed sliding up/down the wall
+const WALL_CLIMB_SPEED = 130.0   # max speed up/down the wall when holding up/down
 const WALL_CLIMB_ACCEL = 3000.0  # how fast you speed up on the wall
-const WALL_CLIMB_FRIC  = 3300.0  # how fast you stop when no up/down is held
-
-const GRAVITY_NORM: float = 14.5
-const GRAV_WALL: float = 6
+const WALL_CLIMB_FRIC  = 3300.0  # how fast you slow down toward the slide speed
+const WALL_SLIDE_SPEED = 30.0    # slow downward drift when no up/down is held
 
 var wall_contact_coyote: float = 0.0
 const WALL_CONT_COYOTE_TIME: float = 0.2
@@ -100,27 +100,23 @@ func _update_cling() -> void:
 		and toward != 0.0
 		and toward == wall_dir
 	)
-		
+
 func _wall_jump(delta: float) -> void:
 	if is_clinging:
-		look_dir_x = int(sign(get_wall_normal().x)) * -1  # direction of the wall
+		look_dir_x = int(-signf(get_wall_normal().x))  # direction of the wall
 		wall_contact_coyote = WALL_CONT_COYOTE_TIME
-		velocity.y = GRAV_WALL #asldkfj a;klsdfj
 		
 		var v_input := Input.get_axis("move_up", "move_down")  # up is negative
-		if v_input != 0.0:
-			velocity.y = move_toward(velocity.y, v_input * WALL_CLIMB_SPEED, WALL_CLIMB_ACCEL * delta)
-		else:
-			velocity.y = move_toward(velocity.y, 0.0, WALL_CLIMB_FRIC * delta)
-			
-			velocity.x = look_dir_x * 20
+		var target_y := v_input * WALL_CLIMB_SPEED if v_input != 0.0 else WALL_SLIDE_SPEED
+		var rate := WALL_CLIMB_ACCEL if v_input != 0.0 else WALL_CLIMB_FRIC
+		velocity.y = move_toward(velocity.y, target_y, rate * delta)
+		
+		velocity.x = look_dir_x * 20.0  # small push keeps is_on_wall() true
 	else:
 		wall_contact_coyote = max(wall_contact_coyote - delta, 0.0)
 	
 	if wall_jump_lock > 0.0:
 		wall_jump_lock = max(wall_jump_lock - delta, 0.0)
-		wall_contact_coyote -= delta #tadkfjasd
-		velocity.y += GRAVITY_NORM #laksjdf; laksjd;fa
 	
 	if not is_on_floor() and wall_contact_coyote > 0.0 and Input.is_action_just_pressed("jump"):
 		velocity.y = JUMP_VELOCITY
@@ -129,9 +125,9 @@ func _wall_jump(delta: float) -> void:
 		wall_contact_coyote = 0.0
 
 func _physics_process(delta):
+	_update_cling()
 	_apply_gravity(delta)
 	_handle_jump(delta)
 	_handle_horizontal(delta)
-	_update_cling()
 	_wall_jump(delta)
 	move_and_slide()
