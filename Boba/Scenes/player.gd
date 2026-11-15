@@ -134,6 +134,14 @@ func _wall_jump(delta: float) -> void:
 		velocity.x = -look_dir_x * WALL_JUMP_PUSH
 		wall_jump_lock = WALL_JUMP_LOCK_TIME
 		wall_contact_coyote = 0.0
+		
+# --- Dash ---
+const DASH_SPEED: float = 180.0
+const DASH_TIME: float = 0.12
+var can_dash: bool = true
+var dash_timer: float = 0.0
+
+
 
 func _physics_process(delta):
 	_update_cling()
