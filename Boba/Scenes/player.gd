@@ -8,12 +8,16 @@ const AIR_ACCEL = 900    # weaker steering during airtime (lower than ground acc
 const AIR_FRIC  = 350    # how quickly you slow down (lower number retains more velocity)
 
 # --- Jumping ---
-const JUMP_VELOCITY = -300 # initial jump speed (godot y asix is negative, so y velocity -300 is +300)
+const JUMP_VELOCITIES = [-300.0, -387.0, -458.0] # jumps 1, 2, 3
+const COMBO_TIMER = 0.30 # time for combo jump after hittin floor
+
+var jump_stage := 0   # counts jump stage
+var combo_timer := 0.0
 
 # --- adds acceleration and smooth stop ---
 func _handle_horizontal(delta):
 	if wall_jump_lock > 0.0:
-		return
+		return # stops code if after wall jump
 		
 	var direction := Input.get_axis("move_left", "move_right") # -1 if left, 0 if still, +1 if right
 	if direction != 0.0: # if direction key if pressed
@@ -24,7 +28,7 @@ func _handle_horizontal(delta):
 		velocity.x = move_toward(velocity.x, 0.0, fric * delta) # (current, speed to 0.0, groudn or air friction)
 		
 
-# --- Coyote Time/ Jump Buffer/ Variable Jump Height ---
+# --- Coyote Time/ Jump Buffer/ Variable Jump Height/ Combo Timer ---
 const COYOTE_TIME = 0.10 # jumping after ledge
 const JUMP_BUFFER = 0.10 # press jump before landing
 const JUMP_CUT = 0.45 # fraction of the rising speed kept on an early release
@@ -33,6 +37,14 @@ var coyote_timer := 0.0
 var jump_buffer_timer := 0.0
 
 func _handle_jump(delta):
+	# --- Coyote timer + combo timer ---
+	if is_on_floor():
+		coyote_timer = COYOTE_TIME
+		combo_timer = max(combo_timer - delta, 0.0) # only counts down while on the ground
+		if combo_timer == 0.0:
+			jump_stage = 0 # waited too long, chain resets
+	else:
+		coyote_timer = max(coyote_timer - delta, 0.0)
 	# --- Coyote timer ---
 	if is_on_floor():
 		coyote_timer = COYOTE_TIME # if on floor, make coyote_timer 0.10
@@ -46,9 +58,11 @@ func _handle_jump(delta):
 		jump_buffer_timer = max(jump_buffer_timer - delta, 0.0) # start buffer timer if button pressed in past frame, otherwise make timer = 0.0
 		
 	if jump_buffer_timer > 0.0 and coyote_timer > 0.0:
-		velocity.y = JUMP_VELOCITY
+		velocity.y = JUMP_VELOCITIES[jump_stage]            # pick this jump's speed
+		jump_stage = (jump_stage + 1) % JUMP_VELOCITIES.size() # move to the next jump, wrap after the last
+		combo_timer = COMBO_TIMER                         # restart the window
 		jump_buffer_timer = 0.0
-		coyote_timer = 0.0 # if both Coyote Time and Jump Buffer are true, jump and set values to 0.0
+		coyote_timer = 0.0
 		
  	# --- Variable Jump Height ---
 	if Input.is_action_just_released("jump") and velocity.y < 0.0 and not is_clinging:
@@ -76,29 +90,30 @@ func _apply_gravity(delta):
 
 # --- Wall Jump/ Cling ---
 const WALL_JUMP_PUSH: float = 100.0
-const WALL_CLIMB_SPEED = 130.0   # max speed up/down the wall when holding up/down
-const WALL_CLIMB_ACCEL = 3000.0  # how fast you speed up on the wall
-const WALL_CLIMB_FRIC  = 3300.0  # how fast you slow down toward the slide speed
-const WALL_SLIDE_SPEED = 30.0    # slow downward drift when no up/down is held
+const WALL_CLIMB_SPEED = 130.0   # max speed up/down the wall
+const WALL_CLIMB_ACCEL = 3000.0  # wall accel
+const WALL_CLIMB_FRIC  = 3300.0  # wall friction
+const WALL_SLIDE_SPEED = 30.0    # slow slide downwards
+const WALL_GLIDE_SPEED = -300    # main glide speed
 
-var wall_contact_coyote: float = 0.0
-const WALL_CONT_COYOTE_TIME: float = 0.2
+var wall_contact_coyote: float = 0.0 # set coyote time to 0
+const WALL_CONT_COYOTE_TIME: float = 0.2 # set coyote time to 0.2
+ 
+var wall_jump_lock: float = 0.0 # set jump lock timer to 0
+const WALL_JUMP_LOCK_TIME = 0.05 # set jump lock timer to 0.05
 
-var wall_jump_lock: float = 0.0
-const WALL_JUMP_LOCK_TIME = 0.05
+var look_dir_x: int = 1 #wall to left is -1, wall to right is +1, and default setting is +1
+var is_clinging := false # starts with character not clinging to wall
 
-var look_dir_x: int = 1
-var is_clinging := false
-
-func _update_cling() -> void:
-	var toward := Input.get_axis("move_left", "move_right")
-	var wall_dir := -signf(get_wall_normal().x) if is_on_wall() else 0.0
-	is_clinging = (
+func _update_cling() -> void: # returns to nothing
+	var toward := Input.get_axis("move_left", "move_right") # what direction the player presses, left=-1, right=+1, neurtral=0
+	var wall_dir := -signf(get_wall_normal().x) if is_on_wall() else 0.0 # player direction on wall is -normal, signf simnplifies to 1, -1, 0, if not on wall, 0
+	is_clinging = ( # condition of wall cling
 		not is_on_floor()
 		and is_on_wall()
-		and wall_jump_lock <= 0.0
-		and toward != 0.0
-		and toward == wall_dir
+		and wall_jump_lock <= 0.0 # short lockout is positive
+		and toward != 0.0 # a direction key is pressed
+		and toward == wall_dir # button pressed matches wall directino
 	)
 
 func _wall_jump(delta: float) -> void:
@@ -111,7 +126,7 @@ func _wall_jump(delta: float) -> void:
 		var rate := WALL_CLIMB_ACCEL if v_input != 0.0 else WALL_CLIMB_FRIC
 		velocity.y = move_toward(velocity.y, target_y, rate * delta)
 		
-		velocity.x = look_dir_x * 20.0  # small push keeps is_on_wall() true
+		velocity.x = look_dir_x * 20.0  # small push keeps is_on_wall true
 	else:
 		wall_contact_coyote = max(wall_contact_coyote - delta, 0.0)
 	
@@ -119,7 +134,7 @@ func _wall_jump(delta: float) -> void:
 		wall_jump_lock = max(wall_jump_lock - delta, 0.0)
 	
 	if not is_on_floor() and wall_contact_coyote > 0.0 and Input.is_action_just_pressed("jump"):
-		velocity.y = JUMP_VELOCITY
+		velocity.y = WALL_GLIDE_SPEED
 		velocity.x = -look_dir_x * WALL_JUMP_PUSH
 		wall_jump_lock = WALL_JUMP_LOCK_TIME
 		wall_contact_coyote = 0.0
