@@ -8,7 +8,7 @@ const AIR_ACCEL = 900    # weaker steering during airtime (lower than ground acc
 const AIR_FRIC  = 350    # how quickly you slow down (lower number retains more velocity)
 
 # --- Jumping ---
-const JUMP_VELOCITIES = [-200.0, -280.0, -360.0] # jumps 1, 2, 3
+const JUMP_VELOCITIES = [-260.0, -310.0, -360.0] # jumps 1, 2, 3
 const COMBO_TIMER = 0.10 # time for combo jump after hittin floor
 
 var jump_stage := 0   # counts jump stage
