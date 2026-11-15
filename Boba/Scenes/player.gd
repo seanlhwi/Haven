@@ -8,8 +8,8 @@ const AIR_ACCEL = 900    # weaker steering during airtime (lower than ground acc
 const AIR_FRIC  = 350    # how quickly you slow down (lower number retains more velocity)
 
 # --- Jumping ---
-const JUMP_VELOCITIES = [-300.0, -387.0, -458.0] # jumps 1, 2, 3
-const COMBO_TIMER = 0.30 # time for combo jump after hittin floor
+const JUMP_VELOCITIES = [-200.0, -280.0, -360.0] # jumps 1, 2, 3
+const COMBO_TIMER = 0.10 # time for combo jump after hittin floor
 
 var jump_stage := 0   # counts jump stage
 var combo_timer := 0.0
@@ -45,21 +45,17 @@ func _handle_jump(delta):
 			jump_stage = 0 # waited too long, chain resets
 	else:
 		coyote_timer = max(coyote_timer - delta, 0.0)
-	# --- Coyote timer ---
-	if is_on_floor():
-		coyote_timer = COYOTE_TIME # if on floor, make coyote_timer 0.10
-	else:
-		coyote_timer = max(coyote_timer - delta, 0.0) # count down by delta each frame until time is 0.0
 	
 	# --- Jump Buffer Timer ---
-	if Input.is_action_just_pressed("jump"):
+	if Input.is_action_pressed("jump"):
 		jump_buffer_timer = JUMP_BUFFER # if action just pressed make jump buffer timer 0.10
 	else:
 		jump_buffer_timer = max(jump_buffer_timer - delta, 0.0) # start buffer timer if button pressed in past frame, otherwise make timer = 0.0
 		
 	if jump_buffer_timer > 0.0 and coyote_timer > 0.0:
 		velocity.y = JUMP_VELOCITIES[jump_stage]            # pick this jump's speed
-		jump_stage = (jump_stage + 1) % JUMP_VELOCITIES.size() # move to the next jump, wrap after the last
+		#jump_stage = (jump_stage + 1) % JUMP_VELOCITIES.size() # move to the next jump, wrap after the last
+		jump_stage = min(jump_stage + 1, JUMP_VELOCITIES.size() - 1) # advance, but stay on the last (highest) jump
 		combo_timer = COMBO_TIMER                         # restart the window
 		jump_buffer_timer = 0.0
 		coyote_timer = 0.0
