@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://2lwdoe6bqa6x"
-path="res://.godot/imported/boba anim.png-52e230706f2c43834788c1b74c57f2d8.ctex"
+path="res://.godot/imported/boba anim.png-bc605637204edbf87d0e9e9484eab0c4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assests/boba anim.png"
-dest_files=["res://.godot/imported/boba anim.png-52e230706f2c43834788c1b74c57f2d8.ctex"]
+source_file="res://Assests/Sprites/boba anim.png"
+dest_files=["res://.godot/imported/boba anim.png-bc605637204edbf87d0e9e9484eab0c4.ctex"]
 
 [params]
 

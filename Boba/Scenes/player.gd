@@ -1,4 +1,5 @@
 extends CharacterBody2D
+@onready var animated_sprite: AnimatedSprite2D = $AnimatedSprite2D
 
 # --- Horizontal Movement ---
 const SPEED     = 130
@@ -136,12 +137,53 @@ func _wall_jump(delta: float) -> void:
 		wall_contact_coyote = 0.0
 		
 # --- Dash ---
-const DASH_SPEED: float = 180.0
+const DASH_SPEED: float = 1000.0
 const DASH_TIME: float = 0.12
 var can_dash: bool = true
 var dash_timer: float = 0.0
 
-
+func _dash_check(delta: float) -> void:
+	var x_input: float = Input.get_axis("move_left", "move_right")
+	if dash_timer == 0.0:
+		var velocity_weight_x: float = 1.0 - exp( -(ACCEL if x_input else FRIC))
+		velocity.x = lerp(velocity.x, x_input * SPEED, velocity_weight_x)
+	
+	if x_input:
+		look_dir_x = int(x_input)
+		
+	if is_on_floor():
+		if dash_timer == 0.0 and !can_dash:
+			can_dash = true
+			
+# --- dash logic ---
+func _dash_logic(delta: float) -> void:
+	if can_dash and Input.is_action_just_pressed("dash"):
+		can_dash = false
+		dash_timer = DASH_TIME
+		velocity.x = DASH_SPEED * look_dir_x
+		velocity.y = 0.0
+		
+	if dash_timer > 0.0:
+		dash_timer = max(0.0, dash_timer - delta)
+		if is_on_wall():
+			dash_timer = 0.0
+			
+# --- animations ---
+func _handle_anim() -> void:
+	if is_clinging:
+		if look_dir_x < 0:
+			animated_sprite.play("left_wall")
+		else:
+			animated_sprite.play("right_wall")
+		return
+	
+	var direction := Input.get_axis("move_left", "move_right")
+	if direction == 0.0:
+		animated_sprite.play("idle")
+	elif direction < 0.0:
+		animated_sprite.play("idle")   # swap in "run_left" when you have one
+	else:
+		animated_sprite.play("idle")   # swap in "run_right" when you have one
 
 func _physics_process(delta):
 	_update_cling()
@@ -149,4 +191,7 @@ func _physics_process(delta):
 	_handle_jump(delta)
 	_handle_horizontal(delta)
 	_wall_jump(delta)
+	_dash_check(delta)
+	_dash_logic(delta)
+	_handle_anim()
 	move_and_slide()
