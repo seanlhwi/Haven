@@ -17,7 +17,7 @@ var combo_timer := 0.0
 
 # --- adds acceleration and smooth stop ---
 func _handle_horizontal(delta):
-	if wall_jump_lock > 0.0 or is_dashing:
+	if wall_jump_lock > 0.0:
 		return # stops code if after wall jump
 		
 	var direction := Input.get_axis("move_left", "move_right") # -1 if left, 0 if still, +1 if right
@@ -76,7 +76,7 @@ const MAX_FALL_SPEED    = 400.0 # max speed when falling for control
 var base_gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity") # brings default gravity number to scale with const, float is decimal number
 
 func _apply_gravity(delta):
-	if is_clinging or is_dashing:
+	if is_clinging:
 		return
 	if not is_on_floor():
 		var mult := RISE_GRAV_MULT if velocity.y < 0.0 else FALL_GRAV_MULT # when not on floor, multiply rise and fall gravity based on + or - velocity
@@ -137,89 +137,53 @@ func _wall_jump(delta: float) -> void:
 		wall_contact_coyote = 0.0
 		
 # --- Dash ---
-const DASH_SPEED: float = 600.0
-const DASH_TIME: float = 0.15
+const DASH_SPEED: float = 1000.0
+const DASH_TIME: float = 0.12
 var can_dash: bool = true
 var dash_timer: float = 0.0
-var is_dashing: bool = false
-var facing_x: int = 1
 
 func _dash_check(delta: float) -> void:
 	var x_input: float = Input.get_axis("move_left", "move_right")
-	if x_input != 0.0:
-		facing_x = int(x_input)
+	if dash_timer == 0.0:
+		var velocity_weight_x: float = 1.0 - exp( -(ACCEL if x_input else FRIC))
+		velocity.x = lerp(velocity.x, x_input * SPEED, velocity_weight_x)
 	
-	if is_on_floor() and dash_timer == 0.0:
-		can_dash = true
-
+	if x_input:
+		look_dir_x = int(x_input)
+		
+	if is_on_floor():
+		if dash_timer == 0.0 and !can_dash:
+			can_dash = true
+			
 # --- dash logic ---
 func _dash_logic(delta: float) -> void:
 	if can_dash and Input.is_action_just_pressed("dash"):
 		can_dash = false
 		dash_timer = DASH_TIME
-		velocity.x = DASH_SPEED * facing_x
+		velocity.x = DASH_SPEED * look_dir_x
 		velocity.y = 0.0
-	
+		
 	if dash_timer > 0.0:
 		dash_timer = max(0.0, dash_timer - delta)
 		if is_on_wall():
 			dash_timer = 0.0
-		if dash_timer == 0.0:
-			velocity.x = facing_x * SPEED  # leave the dash at normal speed
-	
-	is_dashing = dash_timer > 0.0
 			
 # --- animations ---
-enum Phase { NONE, ON, HOLD, OFF }
-var phase := Phase.NONE
-var current_move := ""   # remembers past move, and "" if none
-
-func _ready() -> void:
-	animated_sprite.animation_finished.connect(_on_animation_finished) # plays animation once, and sends to next function, _ready plays once
-
-func _desired_move() -> String:
-	if is_clinging:
-		return "left_wall" if look_dir_x < 0 else "right_wall"
-	if is_dashing:
-		return "dash_left" if facing_x < 0 else "dash_right"
-	return "" # finds current desired move
-
 func _handle_anim() -> void:
-	var desired := _desired_move()
-	
-	if desired != "" and (desired != current_move or phase == Phase.OFF):
-		current_move = desired
-		if animated_sprite.sprite_frames.has_animation(current_move):
-			phase = Phase.ON
-			animated_sprite.play(current_move)            # transition in
+	if is_clinging:
+		if look_dir_x < 0:
+			animated_sprite.play("left_wall")
 		else:
-			phase = Phase.HOLD
-			animated_sprite.play(current_move + "_on")    # hold
+			animated_sprite.play("right_wall")
+		return
 	
-	elif desired == "" and current_move != "" and phase != Phase.OFF:
-		var off_name := current_move + "_off"
-		if animated_sprite.sprite_frames.has_animation(off_name):
-			phase = Phase.OFF
-			animated_sprite.play(off_name)
-		else:
-			phase = Phase.NONE
-			current_move = ""
-	
-	if phase == Phase.OFF and not animated_sprite.is_playing():
-		phase = Phase.NONE
-		current_move = ""
-	
-	if phase == Phase.NONE:
+	var direction := Input.get_axis("move_left", "move_right")
+	if direction == 0.0:
 		animated_sprite.play("idle")
-
-func _on_animation_finished() -> void:
-	match phase:
-		Phase.ON:
-			phase = Phase.HOLD
-			animated_sprite.play(current_move + "_on")    # hold
-		Phase.OFF:
-			phase = Phase.NONE
-			current_move = ""
+	elif direction < 0.0:
+		animated_sprite.play("idle")   # swap in "run_left" when you have one
+	else:
+		animated_sprite.play("idle")   # swap in "run_right" when you have one
 
 func _physics_process(delta):
 	_update_cling()
