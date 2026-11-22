@@ -154,7 +154,9 @@ func _dash_check(delta: float) -> void:
 
 # --- dash logic ---
 func _dash_logic(delta: float) -> void:
-	if can_dash and Input.is_action_just_pressed("dash"):
+	if can_dash and Input.is_action_just_pressed("dash") \
+		and GameState.has_ability("dash") \
+		and can_dash and not is_dashing:
 		can_dash = false
 		dash_timer = DASH_TIME
 		velocity.x = DASH_SPEED * facing_x
