@@ -21,13 +21,16 @@ func _handle_horizontal(delta):
 		return # stops code if after wall jump
 		
 	var direction := Input.get_axis("move_left", "move_right") # -1 if left, 0 if still, +1 if right
-	if direction != 0.0: # if direction key if pressed
-		var accel := ACCEL if is_on_floor() else AIR_ACCEL # picks ground or air ACCEL constant
-		velocity.x = move_toward(velocity.x, direction * SPEED, accel * delta) # (current, target, how much you can change)
+	if direction != 0.0:
+		var accel := ACCEL if is_on_floor() else AIR_ACCEL
+		if liquid_count > 0:
+			accel *= LIQUID_ACCEL_MULT
+		velocity.x = move_toward(velocity.x, direction * SPEED * speed_multiplier, accel * delta)
 	else:
 		var fric := FRIC if is_on_floor() else AIR_FRIC
-		velocity.x = move_toward(velocity.x, 0.0, fric * delta) # (current, speed to 0.0, groudn or air friction)
-		
+		if liquid_count > 0:
+			fric *= LIQUID_ACCEL_MULT
+		velocity.x = move_toward(velocity.x, 0.0, fric * delta)
 
 # --- Coyote Time/ Jump Buffer/ Variable Jump Height/ Combo Timer ---
 const COYOTE_TIME = 0.10 # jumping after ledge
@@ -54,7 +57,7 @@ func _handle_jump(delta):
 		jump_buffer_timer = max(jump_buffer_timer - delta, 0.0) # start buffer timer if button pressed in past frame, otherwise make timer = 0.0
 		
 	if jump_buffer_timer > 0.0 and coyote_timer > 0.0:
-		velocity.y = JUMP_VELOCITIES[jump_stage]            # pick this jump's speed
+		velocity.y = JUMP_VELOCITIES[jump_stage] * (0.5 if liquid_count > 0 else 1.0)            # pick this jump's speed
 		#jump_stage = (jump_stage + 1) % JUMP_VELOCITIES.size() # move to the next jump, wrap after the last
 		jump_stage = min(jump_stage + 1, JUMP_VELOCITIES.size() - 1) # advance, but stay on the last (highest) jump
 		combo_timer = COMBO_TIMER                         # restart the window
@@ -82,8 +85,15 @@ func _apply_gravity(delta):
 		var mult := RISE_GRAV_MULT if velocity.y < 0.0 else FALL_GRAV_MULT # when not on floor, multiply rise and fall gravity based on + or - velocity
 		if absf(velocity.y) < APEX_SPEED_THRES: # "absf" is absolute value
 			mult *= APEX_GRAV_MULT # when at apex, multiply time by apex_grav_mult
-		velocity.y += base_gravity * mult * delta # takes base, multiply it by chosen scale, and adds it to downward velocity
-		velocity.y = min(velocity.y, MAX_FALL_SPEED) # picks smaller number, caps speed to max_fall_speed
+			
+		var grav := base_gravity * mult
+		var max_fall := MAX_FALL_SPEED
+		if liquid_count > 0:
+			grav *= LIQUID_GRAV_MULT
+			max_fall = LIQUID_MAX_FALL_SPEED
+			
+		velocity.y += grav * delta # takes base, multiply it by chosen scale, and adds it to downward velocity
+		velocity.y = min(velocity.y, max_fall) # picks smaller number, caps speed to max_fall_speed
 
 # --- Wall Jump/ Cling ---
 const WALL_JUMP_PUSH: float = 100.0
@@ -151,6 +161,8 @@ func _dash_check(delta: float) -> void:
 	
 	if is_on_floor() and dash_timer == 0.0:
 		can_dash = true
+		
+	
 
 # --- dash logic ---
 func _dash_logic(delta: float) -> void:
@@ -159,7 +171,7 @@ func _dash_logic(delta: float) -> void:
 		and can_dash and not is_dashing:
 		can_dash = false
 		dash_timer = DASH_TIME
-		velocity.x = DASH_SPEED * facing_x
+		velocity.x = DASH_SPEED * facing_x * speed_multiplier
 		velocity.y = 0.0
 	
 	if dash_timer > 0.0:
@@ -170,6 +182,25 @@ func _dash_logic(delta: float) -> void:
 			velocity.x = facing_x * SPEED  # leave the dash at normal speed
 	
 	is_dashing = dash_timer > 0.0
+	
+# --- liquid ---
+const LIQUID_ACCEL_MULT = 0.25      # lower = slower to speed up/slow down
+const LIQUID_GRAV_MULT = 0.3        # lower = floatier
+const LIQUID_MAX_FALL_SPEED = 100.0 # fall speed cap in liquid
+
+var liquid_count := 0
+var speed_multiplier := 1.0
+
+func enter_liquid():
+	liquid_count += 1
+	speed_multiplier = 0.25
+	print("enter_liquid called, multiplier: ", speed_multiplier)
+
+func exit_liquid():
+	liquid_count = max(0, liquid_count - 1)
+	if liquid_count == 0:
+		speed_multiplier = 1.0
+		
 			
 # --- animations ---
 enum Phase { NONE, ON, HOLD, OFF }
