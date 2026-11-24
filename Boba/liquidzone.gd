@@ -2,7 +2,7 @@
 extends Area2D
 
 func _ready():
-	print("Liquid zone ready")
+	print("Liquid zone working")
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
 

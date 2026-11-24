@@ -22,12 +22,12 @@ func _handle_horizontal(delta):
 		
 	var direction := Input.get_axis("move_left", "move_right") # -1 if left, 0 if still, +1 if right
 	if direction != 0.0:
-		var accel := ACCEL if is_on_floor() else AIR_ACCEL
+		var accel : float = ACCEL if is_on_floor() else AIR_ACCEL
 		if liquid_count > 0:
-			accel *= LIQUID_ACCEL_MULT
+			accel  *= LIQUID_ACCEL_MULT
 		velocity.x = move_toward(velocity.x, direction * SPEED * speed_multiplier, accel * delta)
 	else:
-		var fric := FRIC if is_on_floor() else AIR_FRIC
+		var fric : float = FRIC if is_on_floor() else AIR_FRIC
 		if liquid_count > 0:
 			fric *= LIQUID_ACCEL_MULT
 		velocity.x = move_toward(velocity.x, 0.0, fric * delta)
@@ -93,7 +93,8 @@ func _apply_gravity(delta):
 			max_fall = LIQUID_MAX_FALL_SPEED
 			
 		velocity.y += grav * delta # takes base, multiply it by chosen scale, and adds it to downward velocity
-		velocity.y = min(velocity.y, max_fall) # picks smaller number, caps speed to max_fall_speed
+		if velocity.y > max_fall:
+			velocity.y = move_toward(velocity.y, max_fall, 1400.0 * delta)
 
 # --- Wall Jump/ Cling ---
 const WALL_JUMP_PUSH: float = 100.0
@@ -185,8 +186,8 @@ func _dash_logic(delta: float) -> void:
 	
 # --- liquid ---
 const LIQUID_ACCEL_MULT = 0.25      # lower = slower to speed up/slow down
-const LIQUID_GRAV_MULT = 0.3        # lower = floatier
-const LIQUID_MAX_FALL_SPEED = 100.0 # fall speed cap in liquid
+const LIQUID_GRAV_MULT = 0.3        # lower = more buoyant
+const LIQUID_MAX_FALL_SPEED = 60.0 # fall speed cap in liquid
 
 var liquid_count := 0
 var speed_multiplier := 1.0
